@@ -9,10 +9,7 @@
  * ArrayList idea from Cuboid
  */
 
-//Need libraries
-import java.util.Date;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.io.IOException;
 
 public class MonoPort extends Plugin {
 
@@ -20,11 +17,15 @@ public class MonoPort extends Plugin {
 
     public void enable() {
         addCustomCommands();
-        System.out.println(listener.getDateTime()+" [INFO] MonoPort v.0.5 plugin enabled");
-        if (listener.properties == null) {
-           listener.properties = new PropertiesFile("monoport.properties");
+        System.out.println(listener.getDateTime()+" [INFO] MonoPort v.0.6 plugin enabled");
+        if (MonoPortListener.properties == null) {
+           MonoPortListener.properties = new PropertiesFile("monoport.properties");
         } else {
-            listener.properties.load();
+            try {
+                MonoPortListener.properties.load();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         listener.checkDataFile();
         if (!listener.loadPortalsIntoArray())

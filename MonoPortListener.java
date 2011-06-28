@@ -158,31 +158,33 @@ public class MonoPortListener extends PluginListener {
         //Must return false, or else no other commands will be checked!
         return false;
     }
+
     public void onPlayerMove(Player player, Location from, Location to) {
-        if (player.canUseCommand("/useportal")){
+        if (player.canUseCommand("/useportal")) {
             boolean isPortal = false;
             Block portalBlock = new Block();
             int portalHeight = properties.getInt("portalHeight", 2);
-            for (Block b : portalCube){
-                if (b.getX() == (int)to.x){
-                    if (b.getZ() == (int)to.z){
-                        //Y is height in Minecraft
-                        if ((b.getY() + portalHeight >= (int)to.y && b.getY() <= (int)to.y)
-                                || (b.getY() + portalHeight <= (int)to.y && b.getY() >= (int)to.y)){
-                            isPortal = true;
-                            portalBlock = b;
+            for (Block b : portalCube) {
+                if (b.getWorld().equals(player.getWorld())) {
+                    if (b.getX() == (int) to.x) {
+                        if (b.getZ() == (int) to.z) {
+                            // Y is height in Minecraft
+                            if ((b.getY() + portalHeight >= (int) to.y && b.getY() <= (int) to.y)
+                                    || (b.getY() + portalHeight <= (int) to.y && b.getY() >= (int) to.y)) {
+                                isPortal = true;
+                                portalBlock = b;
+                            }
                         }
                     }
                 }
             }
-            if (isPortal){
+            if (isPortal) {
                 String portalName = findPortalName(portalBlock);
-                if ( portalName != null)
-                {
+                if (portalName != null) {
                     ArrayList<String> destinations = getDestinationsFromPortal(portalName);
-                    if (destinations != null){
+                    if (destinations != null) {
                         String destName = getRandomPortalName(destinations);
-                        portPlayer(player,destName,portalName);
+                        portPlayer(player, destName, portalName);
                     }
                 }
             }
@@ -201,7 +203,7 @@ public class MonoPortListener extends PluginListener {
                 paymentItem.setAmount(amount - paymentAmount);
                 player.getInventory().removeItem(player.getInventory().getItemFromId(paymentItemType));
                 player.getInventory().addItem(paymentItem);
-                player.getInventory().updateInventory();
+                player.getInventory().update();
                 player.sendMessage(Colors.Rose + "Collecting Payment");
                 canPortal = true;
             }
@@ -218,6 +220,7 @@ public class MonoPortListener extends PluginListener {
             String destCoords = getDestinationCoords(destName);
             Location destination = new Location();
             String[] tempdata = destCoords.split(",");
+            destination.dimension = destCoords.startsWith("d") ? 0:-1;
             destination.x = Double.parseDouble(tempdata[2]);
             destination.y = Double.parseDouble(tempdata[3]);
             destination.z = Double.parseDouble(tempdata[4]);
@@ -261,8 +264,13 @@ public class MonoPortListener extends PluginListener {
                 while (scanner.hasNextLine()) {
                     Block portalBlock = new Block();
                     String line = scanner.nextLine();
-                    if (!line.startsWith("e") || line.equals("")) {
+                    if (!(line.startsWith("e") || line.startsWith("Ne")) || line.equals("")) {
                         continue;
+                    }
+                    if (line.startsWith("e")) {
+                        portalBlock.setWorld(etc.getServer().getWorld(0));
+                    } else {
+                        portalBlock.setWorld(etc.getServer().getWorld(-1));                        
                     }
                     tempdata = line.split(",");
                     portalBlock.setX(Integer.parseInt(tempdata[2]));
@@ -290,11 +298,15 @@ public class MonoPortListener extends PluginListener {
             File dataSource = new File("monoPortWarps.txt");
             if (dataSource.exists()) {
                 FileWriter writer = null;
+                String key = "d";
                 try {
                     String playerLocation = player.getX() + "," + player.getY() +  "," + player.getZ();
                     String playerView = player.getPitch() + "," + player.getRotation();
                     writer = new FileWriter(dataSource,true);
-                    writer.write("d," + location + "," + playerLocation + "," + playerView + "\r\n");
+                    if (player.getWorld().getType().getId() == -1) {
+                       key = "Nd";
+                    }
+                    writer.write(key+"," + location + "," + playerLocation + "," + playerView + "\r\n");
                 }
                 catch (Exception e) {
                     System.out.println(getDateTime()+" [ERROR] Exception while writing to monoPortWarps.txt");
@@ -351,6 +363,9 @@ public class MonoPortListener extends PluginListener {
                 String[] tempdata = {""};
                 while (scanner.hasNextLine()) {
                     String line = scanner.nextLine();
+                    if (line.startsWith("Ne")) {
+                        line = line.substring(1);
+                    }
                     if (!line.startsWith("e") || line.equals("")) {
                         continue;
                     }
@@ -378,6 +393,9 @@ public class MonoPortListener extends PluginListener {
                 String[] tempdata = {""};
                 while (scanner.hasNextLine()) {
                     String line = scanner.nextLine();
+                    if (line.startsWith("N")) {
+                        line = line.substring(1);
+                    }
                     if (!line.startsWith("d") || line.equals("")) {
                         continue;
                     }
@@ -424,6 +442,13 @@ public class MonoPortListener extends PluginListener {
                 String[] tempdata = {""};
                 while (scanner.hasNextLine()) {
                     String line = scanner.nextLine();
+                    if (line.startsWith("Ne")) {
+                        if (block.getWorld().getType().getId() != -1) {
+                            continue;
+                        } else {
+                            line = line.substring(1);
+                        }
+                    }
                     if (!line.startsWith("e") || line.equals("")) {
                         continue;
                     }
@@ -453,7 +478,7 @@ public class MonoPortListener extends PluginListener {
                 String[] tempdata = {""};
                 while (scanner.hasNextLine()) {
                     String line = scanner.nextLine();
-                    if (!line.startsWith("d") || line.equals("")) {
+                    if (!(line.startsWith("d") || line.startsWith("Nd")) || line.equals("")) {
                         continue;
                     }
                     tempdata = line.split(",");
@@ -481,7 +506,7 @@ public class MonoPortListener extends PluginListener {
                 String[] tempdata = {""};
                 while (scanner.hasNextLine()) {
                     String line = scanner.nextLine();
-                    if (!line.startsWith("e") || line.equals("")) {
+                    if (!(line.startsWith("e") || line.startsWith("Ne")) || line.equals("")) {
                         continue;
                     }
                     tempdata = line.split(",");
@@ -503,20 +528,21 @@ public class MonoPortListener extends PluginListener {
         File dataSource = new File("monoPortWarps.txt");
         Boolean destExists = false;
         Boolean portalExists = false;
+        String portalCode = block.getWorld().getType().getId() == -1 ? "Ne":"e";
         if (dataSource.exists()) {
             try {
                 Scanner scanner = new Scanner(dataSource);
                 String[] tempdata = {""};
                 while (scanner.hasNextLine()) {
                     String line = scanner.nextLine();
-                    if (line.startsWith("d")){
+                    if (line.startsWith("d") || line.startsWith("Nd")){
                         tempdata = line.split(",");
                         if (tempdata[1].equals(destination))
                         {
                             destExists = true;
                         }
                     }
-                    else if (line.startsWith("e")){
+                    else if (line.startsWith(portalCode)){
                         tempdata = line.split(",");
                         if (tempdata[1].equals(name))
                         {
@@ -545,7 +571,7 @@ public class MonoPortListener extends PluginListener {
             try {
                 String blockLocation = block.getX() + "," + block.getY() +  "," + block.getZ();
                 writer = new FileWriter(dataSource,true);
-                writer.write("e," + name + "," + blockLocation + ",0,0," + usePayment + "," + destination + "\r\n");
+                writer.write(portalCode+"," + name + "," + blockLocation + ",0,0," + usePayment + "," + destination + "\r\n");
             }
             catch (Exception e) {
                 System.out.println(getDateTime()+" [ERROR] Exception while writing to monoPortWarps.txt " + e.getMessage());
@@ -587,7 +613,7 @@ public class MonoPortListener extends PluginListener {
                         tempdata = line.split(",");
                         if (tempdata.length > 2)
                             {
-                            if (tempdata[1].equals(portal) && tempdata[0].equals("e"))
+                            if (tempdata[1].equals(portal) && (tempdata[0].equals("e") || tempdata[0].equals("Ne")))
                             {
                                 continue;
                             }
@@ -622,14 +648,14 @@ public class MonoPortListener extends PluginListener {
                 String[] tempdata = {""};
                 while (scanner.hasNextLine()) {
                     String line = scanner.nextLine();
-                    if (line.startsWith("d")){
+                    if (line.startsWith("d") || line.startsWith("Nd")){
                         tempdata = line.split(",");
                         if (tempdata[1].equals(destName))
                         {
                             destExists = true;
                         }
                     }
-                    else if (line.startsWith("e")){
+                    else if (line.startsWith("e") || line.startsWith("Ne")){
                         tempdata = line.split(",");
                         if (tempdata[1].equals(portalName))
                         {
@@ -700,7 +726,7 @@ public class MonoPortListener extends PluginListener {
                 String[] tempdata = {""};
                 while (scanner.hasNextLine()) {
                     String line = scanner.nextLine();
-                    if (!line.startsWith("e") || line.equals("")) {
+                    if (!(line.startsWith("e") || line.startsWith("Ne")) || line.equals("")) {
                         continue;
                     }
                     tempdata = line.split(",");
@@ -734,7 +760,7 @@ public class MonoPortListener extends PluginListener {
                         tempdata = line.split(",");
                         if (tempdata.length > 7)
                         {
-                            if (tempdata[1].equals(portal) && tempdata[0].equals("e") && tempdata[8].equals(dest))
+                            if (tempdata[1].equals(portal) && (tempdata[0].equals("e")|| tempdata[0].equals("Ne")) && tempdata[8].equals(dest))
                             {
                                 continue;
                             }
