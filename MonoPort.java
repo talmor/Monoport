@@ -17,7 +17,7 @@ public class MonoPort extends Plugin {
 
     public void enable() {
         addCustomCommands();
-        System.out.println(listener.getDateTime()+" [INFO] MonoPort v.0.6 plugin enabled");
+        System.out.println(listener.getDateTime()+" [INFO] MonoPort v.0.61 plugin enabled");
         if (MonoPortListener.properties == null) {
            MonoPortListener.properties = new PropertiesFile("monoport.properties");
         } else {

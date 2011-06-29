@@ -337,7 +337,7 @@ public class MonoPortListener extends PluginListener {
                 String[] tempdata = {""};
                 while (scanner.hasNextLine()) {
                     String line = scanner.nextLine();
-                    if (!line.startsWith("d") || line.equals("")) {
+                    if (!(line.startsWith("d") || line.startsWith("Nd")) || line.equals("")) {
                         continue;
                     }
                     tempdata = line.split(",");
